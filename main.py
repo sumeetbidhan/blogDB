@@ -1,6 +1,6 @@
 from fastapi import FastAPI
-from routes.entry import entry_root
-from routes.blog import blog_root
+from routes.healthCheck import entry_root
+from routes.blogService import blog_root
 
 
 app = FastAPI()

@@ -8,6 +8,8 @@ class BlogModel(BaseModel):
     content: str
     author: str
     tags: list[str] = []
+    comments: list[str] = []
+
 
 
 class CommentModel(BaseModel):

@@ -6,6 +6,7 @@ def DecodeBlog(doc) -> dict:
         "content": doc["content"],
         "author": doc["author"],
         "tags": doc["tags"],
+        "comments": doc["comments"],
     }
 
 def DecodeComment(comment) -> dict:

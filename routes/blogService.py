@@ -1,9 +1,9 @@
-from fastapi import APIRouter
-from models.blog import BlogModel, CommentModel, PostLikeModel, UpdateBlogModel
+from fastapi import APIRouter, HTTPException
+from models.blogModel import BlogModel, CommentModel, PostLikeModel, UpdateBlogModel
 from config.config import blogs_collection
 import datetime
 from datetime import date 
-from serializers.blog import DecodeBlog, DecodeBlogs, DecodeComment, DecodePostLike
+from serializers.blogDataModel import DecodeBlog, DecodeBlogs, DecodeComment, DecodePostLike
 from bson import ObjectId
 
 
@@ -11,8 +11,8 @@ from bson import ObjectId
 blog_root = APIRouter()
 
 # Create a new blog
-@blog_root.post("/new/blog")
-def new_blog(doc: BlogModel): 
+@blog_root.post("/blog")
+def post_new_blog(doc: BlogModel): 
     doc = dict(doc)
     current_date = datetime.date.today()
     doc["date"] = str(current_date)
@@ -28,20 +28,35 @@ def new_blog(doc: BlogModel):
     }
 
 # Create a new comment
-@blog_root.post("/new/comment")
-def new_comment(comment: CommentModel):
-    comment_data = dict(comment)
+@blog_root.post("/comment/{post_id}")
+def post_new_comment(post_id: str, comment: CommentModel):
+    # Check if the blog exists
+    blog = blogs_collection.find_one({"_id": ObjectId(post_id)})
+    if not blog:
+        raise HTTPException(status_code=404, detail="Blog not found")
+
+    # Create the comment
+    comment_data = comment.dict()
     comment_data["timestamp"] = str(date.today())  # Add timestamp
+
     res = blogs_collection.insert_one(comment_data)
     comment_id = str(res.inserted_id)
+
+    # Update the BlogModel with the new comment ID
+    blogs_collection.update_one(
+        {"_id": ObjectId(post_id)},
+        {"$push": {"comments": comment_id}}
+    )
+
     return {
         "status": "ok",
         "message": "Comment posted successfully",
         "_id": comment_id
     }
 
+
 # Like or dislike a post
-@blog_root.post("/post/like")
+@blog_root.post("/blog/like")
 def like_post(like_data: PostLikeModel):
    
     post_id = like_data.post_id
@@ -73,11 +88,25 @@ def like_post(like_data: PostLikeModel):
         "updated_post": updated_post
     }
 
+#get a blog
+@blog_root.get("/blog/{post_id}")
+def get_blog(post_id: str):
+   # Check if the blog exists
+    blog = blogs_collection.find_one({"_id": ObjectId(post_id)})
+    if not blog:
+        raise HTTPException(status_code=404, detail="Blog not found")
+
+    decoded_data =  DecodeBlog(blog)
+
+    return {
+        "status" : "ok",
+        "data" : decoded_data
+    }
 
 
 #getting blogs
-@blog_root.get("/all/blogs")
-def AllBlogs():
+@blog_root.get("/blog/")
+def get_all_blogs():
     res = blogs_collection.find()    
     decoded_data = DecodeBlogs(res)
 
@@ -88,8 +117,8 @@ def AllBlogs():
 
 
 #update blog
-@blog_root.patch("/update/{_id}")
-def UpdateBlog(_id: str, doc:UpdateBlogModel):
+@blog_root.patch("/blog/{_id}")
+def update_blog(_id: str, doc:UpdateBlogModel):
     req = dict(doc.model_dump(exclude_unset=True))
 
     blogs_collection.find_one_and_update(
@@ -108,9 +137,9 @@ def UpdateBlog(_id: str, doc:UpdateBlogModel):
     }
 
 #delete blog
-@blog_root.delete("/delete/{_id}")
-def DeleteBlog(_id: str):
-    blogs_collection.find_one_and_delete(
+@blog_root.delete("/blog/{_id}")
+def delete_blog(_id: str):
+    result = blogs_collection.find_one_and_delete(
         {
             "_id": ObjectId(_id)
         }

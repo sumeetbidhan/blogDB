@@ -1,7 +1,11 @@
 
-# FastAPI Blog API
+# BlogDB 
 
 This is a FastAPI-based RESTful API for managing a blog system. It allows users to create, read, update, and delete blog posts, comment on posts, and like/dislike them. The data is stored in a MongoDB database.
+
+
+![FastAPI Server Screenshot](./ss.png)
+http://127.0.0.1:8000/
 
 ## Table of Contents
 
