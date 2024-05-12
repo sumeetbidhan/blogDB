@@ -33,7 +33,7 @@ This is a FastAPI-based RESTful API for managing a blog system. It allows users 
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/sumeetbidhan/blogDB.git
+   git clone https://github.com/sumeetbidhan/blogDB
    ```
 
 2. Install dependencies:
